@@ -2,7 +2,7 @@
 
 namespace Mpietrucha\Regexp;
 
-use Exception;
+use Mpietrucha\Exception\InvalidArgumentException;
 use Mpietrucha\Finder\InstancesFinder;
 use Illuminate\Support\Collection;
 use Mpietrucha\Support\Concerns\HasFactory;
@@ -43,17 +43,13 @@ class Regexp
 
     public function collect(): Collection
     {
-        if (! $this->name || ! $this->source) {
-            throw new Exception('Cannot fetch regexp from invalid source/name');
-        }
+        throw_if(! $this->name || ! $this->source, new InvalidArgumentException('Cannot fetch regexp from invalid source'));
 
         if (! $this->provider?->name() !== $this->name) {
             $this->provider = self::providers()->get($this->name);
         }
 
-        if (! $this->provider) {
-            throw new Exception("Cannot find any provider for name `$name`");
-        }
+        throw_unless($this->provider, new InvalidArgumentException('Cannot find any provider for name', [$name]));
 
         return collect($this->provider->handle($this->source))->values()->filter()->unique();
     }
