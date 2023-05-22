@@ -43,13 +43,17 @@ class Regexp
 
     public function collect(): Collection
     {
-        throw_if(! $this->name || ! $this->source, new InvalidArgumentException('Cannot fetch regexp from invalid source'));
+        throw_if(! $this->name || ! $this->source, new InvalidArgumentException(
+            'Cannot fetch regexp from invalid source'
+        ));
 
         if (! $this->provider?->name() !== $this->name) {
             $this->provider = self::providers()->get($this->name);
         }
 
-        throw_unless($this->provider, new InvalidArgumentException('Cannot find any provider for name', [$name]));
+        throw_unless($this->provider, new InvalidArgumentException(
+            'Cannot find any provider for name', [$name]
+        ));
 
         return collect($this->provider->handle($this->source))->values()->filter()->unique();
     }
