@@ -20,6 +20,11 @@ class Regexp
     {
     }
 
+    public static function __callStatic(string $method, array $arguments): self
+    {
+        return self::create($method, ...$arguments);
+    }
+
     public static function providers(): Collection
     {
         return self::$providers ??= InstancesFinder::create(__DIR__.'/Provider')->instances(
