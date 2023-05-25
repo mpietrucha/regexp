@@ -2,10 +2,10 @@
 
 namespace Mpietrucha\Regexp;
 
-use Mpietrucha\Exception\InvalidArgumentException;
-use Mpietrucha\Finder\InstancesFinder;
 use Illuminate\Support\Collection;
+use Mpietrucha\Finder\InstancesFinder;
 use Mpietrucha\Support\Concerns\HasFactory;
+use Mpietrucha\Exception\InvalidArgumentException;
 use Mpietrucha\Regexp\Contracts\ProviderInterface;
 
 class Regexp
@@ -20,16 +20,18 @@ class Regexp
     {
     }
 
-    public static function __callStatic(string $method, array $arguments): self
+    public static function __callStatic(string $method, array $arguments): Collection
     {
-        return self::create($method, ...$arguments);
+        return self::create($method, ...$arguments)->collect();
     }
 
     public static function providers(): Collection
     {
-        return self::$providers ??= InstancesFinder::create(__DIR__.'/Provider')->instances(
-            fn (Collection $providers) => $providers->filter(fn (string $provider) => class_implements_interface($provider, ProviderInterface::class))
-        )->mapWithKeys(fn (ProviderInterface $provider) => [$provider->name() => $provider]);
+        return self::$providers ??= InstancesFinder::create(__DIR__.'/Provider')->instance(function (string $namespace) {
+            return class_implements_interface($namespace, ProviderInterface::class);
+        })->instances()->mapWithKeys(fn (ProviderInterface $provider) => [
+            $provider->name() => $provider
+        ]);
     }
 
     public function name(string $name): self
@@ -46,25 +48,27 @@ class Regexp
         return $this;
     }
 
+    public function toArray(): array
+    {
+        return $this->collect()->toArray();
+    }
+
     public function collect(): Collection
     {
-        throw_if(! $this->name || ! $this->source, new InvalidArgumentException(
-            'Cannot fetch regexp from invalid source'
+        throw_unless($this->name && $this->source, new InvalidArgumentException(
+            'Provide valid name and source'
         ));
 
-        if (! $this->provider?->name() !== $this->name) {
+        if ($this->provider?->name() !== $this->name) {
             $this->provider = self::providers()->get($this->name);
         }
 
         throw_unless($this->provider, new InvalidArgumentException(
-            'Cannot find any provider for name', [$name]
+            'Cannot find any provider for', [$this->name]
         ));
 
-        return collect($this->provider->handle($this->source))->values()->filter()->unique();
-    }
+        $response = $this->provider->handle($this->source);
 
-    public function toArray(): array
-    {
-        return $this->collect()->toArray();
+        return collect($response)->values()->filter()->unique();
     }
 }
