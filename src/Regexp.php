@@ -3,7 +3,7 @@
 namespace Mpietrucha\Regexp;
 
 use Illuminate\Support\Collection;
-use Mpietrucha\Finder\InstancesFinder;
+use Mpietrucha\Finder\InstanceFinder;
 use Mpietrucha\Support\Concerns\HasFactory;
 use Mpietrucha\Exception\InvalidArgumentException;
 use Mpietrucha\Regexp\Contracts\ProviderInterface;
@@ -27,7 +27,7 @@ class Regexp
 
     public static function providers(): Collection
     {
-        return self::$providers ??= InstancesFinder::create(__DIR__.'/Provider')->instance(function (string $namespace) {
+        return self::$providers ??= InstanceFinder::create(__DIR__.'/Provider')->instance(function (string $namespace) {
             return class_implements_interface($namespace, ProviderInterface::class);
         })->instances()->mapWithKeys(fn (ProviderInterface $provider) => [
             $provider->name() => $provider
