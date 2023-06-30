@@ -27,7 +27,7 @@ class Regexp
 
     public static function providers(): Collection
     {
-        return self::$providers ??= InstanceFinder::create(__DIR__.'/Provider')->instance(function (string $namespace) {
+        return self::$providers ??= InstanceFinder::create(__DIR__.'/Provider')->namespace(function (string $namespace) {
             return class_implements_interface($namespace, ProviderInterface::class);
         })->instances()->mapWithKeys(fn (ProviderInterface $provider) => [
             $provider->name() => $provider
